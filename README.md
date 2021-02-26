@@ -1,4 +1,4 @@
-# EVE-NG_IP_Assigner
+# EVE-NG | IPv4 Assigner
 
 The boring part while doing networking labs is assinging point to point IP address on all the links in the topology. This script helps to assign ip address to all point to point interfaces in the given topology in EVE-NG.
 
