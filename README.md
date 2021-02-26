@@ -1,6 +1,6 @@
 # EVE-NG | IPv4 Assigner
 
-The boring part while doing networking labs is assinging point to point IP address on all the links in the topology. This script helps to assign ip address to all point to point interfaces in the given topology in EVE-NG.
+The boring part while doing labs are assinging point to point IP address on all the links. This script helps to assign IPv4 address to all point to point interfaces in EVE-NG topology.
 
 ## Usage: 
 assigner.py [-h] -u USERNAME -i EVE_IP -l LAB_PATH
@@ -22,7 +22,7 @@ If there is a link between router **Rx** and **Ry**, where x and y are router nu
 - Loopback address on the Ry will be y.y.y.y/32
 
 ## Limitations: 
-- Two links between same router is not supported.
-- Topology with xrv, csr1000v, and XRv are supported.
-- Multi axis netwrok is not supported.
-- Script will work only if all devices are booted.
+- Two links between a pair of routers are not supported.
+- Only xrv, csr1000v and XRv appliances are supported.
+- Multi axis networks are not supported.
+- Script will work only if all devices are booted up.
