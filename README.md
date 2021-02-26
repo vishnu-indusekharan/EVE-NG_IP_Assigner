@@ -6,10 +6,10 @@ The boring part while doing networking labs is assinging point to point IP addre
 assigner.py [-h] -u USERNAME -i EVE_IP -l LAB_PATH
 ```
 optional arguments:
-  -h, --help            			: show this help message and exit
-  -u USERNAME, --username  			: eve-ng gui USERNAME
-  -i EVE_IP, --eve_IP EVE_IP    	: IP address of the EVE-NG host
-  -l LAB_PATH, --lab_path LAB_PATH 	: Lab Name
+  -h  : show this help message and exit
+  -u  : eve-ng gui USERNAME
+  -i  : IP address of the EVE-NG host
+  -l  : Lab Name
 ```
 ## Example: 
 python assigner.py -u admin -i 10.197.200.11 -l sample_lab.unl
