@@ -125,7 +125,7 @@ def set_vios_device(port,host):
 	tn = telnetlib.Telnet()
 	tn.open(host, port)
 	tn.write(("\r").encode('ascii'))
-	prompt_match = tn.expect([b"#", b">", b"[yes/no]:"]) #prompt_match[0] = 0 1 2 based on match
+	prompt_match = tn.expect([b"#", b">", b": "],timeout=5) #prompt_match[0] = 0 1 2 based on match
 	if prompt_match[0] == 2: #initial config prompt
 		tn.write(("no\r").encode('ascii'))
 	if prompt_match[0] == 1: # > prompt
@@ -137,7 +137,7 @@ def set_csr1000v_device(port,host):
 	tn = telnetlib.Telnet()
 	tn.open(host, port)
 	tn.write(("\r").encode('ascii'))
-	prompt_match = tn.expect([b"#", b">"])
+	prompt_match = tn.expect([b"#", b">"],timeout=5)
 	if prompt_match[0] == 1:  # > prompt
 		tn.write(("en\r").encode('ascii'))
 	if prompt_match[0] == 0: # #prompt
@@ -147,12 +147,48 @@ def set_xrv_device(port,host):
 	tn = telnetlib.Telnet()
 	tn.open(host, port)
 	tn.write(("\r").encode('ascii'))
-	prompt_match = tn.expect([b"#", b"Username: "])
+	prompt_match = tn.expect([b"#", b"Username: "],timeout=5)
 	if prompt_match[0] == 1:  # > prompt
 		tn.read_until(b"Username: ", timeout=10)
 		tn.write(("cisco\r").encode('ascii'))
 		tn.read_until(b"Password: ", timeout=10)
 		tn.write(("cisco\r").encode('ascii'))
+	if prompt_match[0] == 0: # #prompt
+		tn.close()
+
+def set_xrv9k_device(port,host):
+	tn = telnetlib.Telnet()
+	tn.open(host, port)
+	tn.write(("\r").encode('ascii'))
+	prompt_match = tn.expect([b"#", b"username: ", b"Username: "],timeout=5)
+	if prompt_match[0] == 2:
+		tn.read_until(b"Username: ", timeout=10)
+		tn.write(("admin\r").encode('ascii'))
+		tn.read_until(b"Password: ", timeout=10)
+		tn.write(("cisco123\r").encode('ascii'))
+	if prompt_match[0] == 1:  # > prompt
+		tn.read_until(b"username: ", timeout=10)
+		tn.write(("admin\r").encode('ascii'))
+		tn.read_until(b"secret:", timeout=10)
+		tn.write(("cisco123\r").encode('ascii'))
+		tn.read_until(b"secret:", timeout=10)
+		tn.write(("cisco123\r").encode('ascii'))
+		tn.read_until(b"Username: ", timeout=10)
+		tn.write(("admin\r").encode('ascii'))
+		tn.read_until(b"Password: ", timeout=10)
+		tn.write(("cisco123\r").encode('ascii'))
+	if prompt_match[0] == 0: # #prompt
+		tn.close()
+
+def set_csr1000vng_device(port,host):
+	tn = telnetlib.Telnet()
+	tn.open(host, port)
+	tn.write(("\r").encode('ascii'))
+	prompt_match = tn.expect([b"#", b">", b": "],timeout=5) #prompt_match[0] = 0 1 2 based on match
+	if prompt_match[0] == 2: #initial config prompt
+		tn.write(("no\r").encode('ascii'))
+	if prompt_match[0] == 1: # > prompt
+		tn.write(("en\r").encode('ascii'))
 	if prompt_match[0] == 0: # #prompt
 		tn.close()
 
@@ -162,11 +198,11 @@ def add_configuration(host, port, command, device_type):
 
 	if tn.read_until(b"#", timeout=3):
 
-		if device_type in ["vios","csr1000v"]:
+		if device_type in ["vios", "iol", "csr1000v", "csr1000vng" ]:
 			tn.write(("\n\n\n\n").encode('ascii'))
 			tn.write(("config t" + "\n" + command + "\n" + "end" +"\n" + "wr" + "\n").encode('ascii'))
 
-		if device_type == "xrv":
+		if device_type in ["xrv", "xrv9k"]:
 			tn.write(("\n\n\n\n").encode('ascii'))
 			tn.write(("config t" + "\n" + command + "\n" + "commit" +"\n" + "end" + "\n").encode('ascii'))
 
@@ -191,6 +227,8 @@ def main(host,gui_username,gui_password,labPath):
 		ip_interfaces_dict[(hostname,port,device_type)].append((interface,ip_address))
 		# ip_interfaces_dict = {('CSR1', '32769','csr1000v'): [('Gi1', '10.1.6.1'), ('Gi2', '10.1.9.1')],..}
 
+	#pprint(ip_interfaces_dict)
+
 	for element in ip_interfaces_dict.keys():  #('vIOS13', '32781', 'vios')
 		hostname = element[0]
 		port = element[1]
@@ -199,12 +237,18 @@ def main(host,gui_username,gui_password,labPath):
 		#seting up device initially
 		if device_type == "xrv":
 			set_xrv_device(port, host)
-		if device_type == "vios":
+		if device_type in ["vios", "iol"]:
 			set_vios_device(port, host)
 		if device_type == "csr1000v":
 			set_csr1000v_device(port, host)
+		if device_type == "xrv9k":
+			set_xrv9k_device(port,host)
+		if device_type == "csr1000vng":
+			set_csr1000vng_device(port, host)
 
-		number = re.findall("[0-9].*",hostname)[0]
+
+		number = re.findall(r"(\d+)$",hostname)[0]
+
 		command = "hostname " + hostname + "\n" 
 		command += "interface loopback0" + "\n" + "ip address " + number + "." + number + "." + number + "." + number + " 255.255.255.255\n"
 		
@@ -212,9 +256,11 @@ def main(host,gui_username,gui_password,labPath):
 
 		for interface_ip in ip_interfaces_dict[element]: # [('Gi1', '10.1.6.1'), ('Gi2', '10.1.9.1')]
 			command += f"interface {interface_ip[0]}\n ip address {interface_ip[1]} 255.255.255.0\n no shut\n"
-
-		add_configuration(host,port,command,device_type)
-
+		
+		if device_type in ["vios", "iol", "csr1000v", "csr1000vng", "xrv", "xrv9k"]:
+			add_configuration(host,port,command,device_type)
+		else:
+			print(f"Unsupported device, skipping {hostname}")
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
