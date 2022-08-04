@@ -364,7 +364,7 @@ def main(host,gui_username,gui_password,labPath):
 
 		if device_type in ["vios", "iol", "csr1000v", "csr1000vng", "xrv", "xrv9k"]:
 			cisco_command = f"hostname {hostname}\n" 
-			cisco_command += f"interface loopback0\n ip address {number}.{number}.{number}.{number}\n 255.255.255.255\n"
+			cisco_command += f"interface loopback0\n ip address {number}.{number}.{number}.{number} 255.255.255.255\n"
 		
 			for interface_ip in ip_interfaces_dict[element]:
 				cisco_command += f"interface {interface_ip[0]}\n ip address {interface_ip[1]} 255.255.255.0\n no shut\n"
